@@ -8,17 +8,24 @@
 #include <unistd.h>
 #include <string.h>
 
-int main(){
+int main(int argc, char *argv[]){
 	int socket_fd;
 	int result;
 	int client_fd;
-	const char *ip_address = "127.0.0.1";
+	char *ip_address = "127.0.0.1";
 	struct sockaddr_in server_address;
 	struct sockaddr_storage client_address;
 	socklen_t client_length = sizeof(client_address);
 	int port = 8080;
 	char buffer[1024];
 	ssize_t bytes_read;
+
+	//set IP and port if given via command line arguments)
+	if (argc == 3) {
+		ip_address = argv[1];
+		port = atoi(argv[2]);
+	}
+	printf("IP: %s\nPort: %d\n", ip_address, port);
 
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -46,7 +53,7 @@ int main(){
 	result = listen(socket_fd, 5);
 	printf("Socket bound to %s:%d\n", ip_address, port);
 	printf("Waiting for connection...\n");
-	client_fd = accept(socket_fd, (struct sockaddr*) &client_address, client_length);
+	client_fd = accept(socket_fd, (struct sockaddr*) &client_address, &client_length);
 
 	if (client_fd == -1){
 		perror("accept");
