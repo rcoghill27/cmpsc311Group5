@@ -48,6 +48,12 @@ int main(){
 		exit(EXIT_FAILURE);
 	}
 
+    if (argc == 3){
+    	    ip_address = argv[1];
+    	    port = atoi(argv[2]);
+    	}
+    printf("IP: %s\nPort: %d\n", ip_address, port);
+
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
 	server_address.sin_family = AF_INET;
@@ -72,7 +78,6 @@ int main(){
 		exit(EXIT_FAILURE);
 	}
 	log_message(log_filename, "Client Connected");
-	printf("Connection established...\n");
 	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
 		printf("Received Data: %s", buffer);
