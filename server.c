@@ -8,6 +8,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+
+void process_verbose_flag(int verbose) {
+	if (verbose) {
+		printf("Verbose output enabled.\n")
+	}
+}
+
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
@@ -26,11 +33,11 @@ void log_message(const char *filename, const char *message){
     fclose(log_file);
 }
 
-int main(){
+int main(int argc, char *argv[]){
 	int socket_fd;
 	int result;
 	int client_fd;
-	const char *ip_address = "127.0.0.1";
+	char *ip_address = "127.0.0.1";
 	struct sockaddr_in server_address;
 	struct sockaddr_storage client_address;
 	socklen_t client_length = sizeof(client_address);
@@ -38,21 +45,41 @@ int main(){
 	char buffer[1024];
 	char log_filename[] = "serverLog.txt";
 	ssize_t bytes_read;
+	int verbose =0;
 
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+			verbose = 1;
+		}
+	}
+
+	process_verbose_flag(verbose);
+	
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    log_message(log_filename, "Server Started");
+    	log_message(log_filename, "Server Started");
 	// Error handle socket
 	if (socket_fd == -1){
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
 
-    if (argc == 3){
-    	    ip_address = argv[1];
-    	    port = atoi(argv[2]);
+    	if (argc == 3){
+    	    	ip_address = argv[1];
+    	    	port = atoi(argv[2]);
     	}
-    printf("IP: %s\nPort: %d\n", ip_address, port);
+
+	if (argc == 4) {
+		ip_address = argv[1];
+		port = atoi(argv[2]);
+	}
+
+    	if (verbose) {
+    		printf("IP: %s\nPort: %d\n", ip_address, port);
+
+    	}
+
+	log_message(log_filename, "Selected Address: %s\n Selected Port: %d", ip_address, port);
 
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
@@ -80,7 +107,9 @@ int main(){
 	log_message(log_filename, "Client Connected");
 	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
-		printf("Received Data: %s", buffer);
+		if (verbose) {
+			printf("Received Data: %s", buffer);
+		}
 		log_message(log_filename, "Received Request from Client");
 	}
 	close(socket_fd);
