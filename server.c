@@ -67,12 +67,12 @@ int main(int argc, char *argv[]){
 
 	process_verbose_flag(verbose);
   
-  verbose_log(verbose, serverLog_filename, "Verbose output enabled");
-  verbose_log(verbose, serverLog_filename, "Server Started");
+  	verbose_log(verbose, serverLog_filename, "Verbose output enabled");
+  	verbose_log(verbose, serverLog_filename, "Server Started");
 	
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    	log_message(serverLog_filename, "Server Started");
+    	verbose_log(verbose, serverLog_filename, "Server Started");
 	// Error handle socket
 	if (socket_fd == -1){
 		perror("socket");
@@ -89,10 +89,8 @@ int main(int argc, char *argv[]){
 		port = atoi(argv[2]);
 	}
 
-    	if (verbose) {
-        	printf("IP: %s\nPort: %d\n", ip_address, port);
-
-    	}
+    	verbose_log(verbose, serverLog_filename, "IP: %s\nPort: %d\n", ip_address, port);
+	
     	char message[100];
     	sprintf(message, "Selected Address: %s\n Selected Port: %d", ip_address, port);
     	verbose_log(verbose, serverLog_filename, message);
