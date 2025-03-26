@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <stdarg.h>
+
 
 void process_verbose_flag(int verbose) {
 	if (verbose) {
@@ -18,10 +20,11 @@ void process_verbose_flag(int verbose) {
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
-    strftime(timestamp, len, "%m - %d - %Y %H:%M:%S", tm_info);
+    strftime(timestamp, len, "%m-%d-%Y %H:%M:%S", tm_info);
 }
 
-void log_message(const char *filename, const char *message){
+// merged the verbose function and the log_file function
+void verbose_log(int verbose, const char *filename, const char *format, ...) {
     FILE *log_file = fopen(filename, "a");
     if (log_file == NULL){
         perror("Failed to open log file");
@@ -29,8 +32,16 @@ void log_message(const char *filename, const char *message){
     }
     char timestamp[20];
     get_timestamp(timestamp, sizeof(timestamp));
-    fprintf(log_file, "[%s] %s\n", timestamp, message);
+    fprintf(log_file, "[%s] %s\n", timestamp, format);
     fclose(log_file);
+
+    if (verbose) {
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+        printf("\n");
+    }
 }
 
 int main(int argc, char *argv[]){
@@ -44,7 +55,7 @@ int main(int argc, char *argv[]){
 	int port = 8080;
 	char buffer[1024];
 	char serverLog_filename[] = "serverLog.txt";
-    	char messageLog_filename[] = "messageLog.txt";
+  char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
 	int verbose = 0;
 
@@ -55,6 +66,9 @@ int main(int argc, char *argv[]){
 	}
 
 	process_verbose_flag(verbose);
+  
+  verbose_log(verbose, serverLog_filename, "Verbose output enabled");
+  verbose_log(verbose, serverLog_filename, "Server Started");
 	
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -81,7 +95,7 @@ int main(int argc, char *argv[]){
     	}
     	char message[100];
     	sprintf(message, "Selected Address: %s\n Selected Port: %d", ip_address, port);
-    	log_message(serverLog_filename, message);
+    	verbose_log(verbose, serverLog_filename, message);
 
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
@@ -106,21 +120,19 @@ int main(int argc, char *argv[]){
 		close(socket_fd);
 		exit(EXIT_FAILURE);
 	}
-	log_message(serverLog_filename, "Client Connected");
+	verbose_log(verbose, serverLog_filename, "Client Connected");
 	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
-		if (verbose) {
-			printf("Received Data: %s", buffer);
-		}
+	
 
-        char messageSent[100];
-        sprintf(messageSent, "Received Data: %s", buffer);
-        log_message(messageLog_filename, messageSent);
+    char messageSent[100];
+    sprintf(messageSent, "Received Data: %s", buffer);
+    verbose_log(verbose, messageLog_filename, messageSent);
 
-		log_message(serverLog_filename, "Received Request from Client");
+		verbose_log(verbose, serverLog_filename, "Received Request from Client");
 	}
 	close(socket_fd);
-	log_message(serverLog_filename, "Server shutting down");
+	verbose_log(verbose, serverLog_filename, "Server shutting down");
 	close(client_fd);
 	return 0;
 }
