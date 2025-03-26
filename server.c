@@ -11,7 +11,7 @@
 
 void process_verbose_flag(int verbose) {
 	if (verbose) {
-		printf("Verbose output enabled.\n")
+		printf("Verbose output enabled.\n");
 	}
 }
 
@@ -43,9 +43,10 @@ int main(int argc, char *argv[]){
 	socklen_t client_length = sizeof(client_address);
 	int port = 8080;
 	char buffer[1024];
-	char log_filename[] = "serverLog.txt";
+	char serverLog_filename[] = "serverLog.txt";
+    	char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
-	int verbose =0;
+	int verbose = 0;
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
@@ -57,7 +58,7 @@ int main(int argc, char *argv[]){
 	
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    	log_message(log_filename, "Server Started");
+    	log_message(serverLog_filename, "Server Started");
 	// Error handle socket
 	if (socket_fd == -1){
 		perror("socket");
@@ -75,11 +76,12 @@ int main(int argc, char *argv[]){
 	}
 
     	if (verbose) {
-    		printf("IP: %s\nPort: %d\n", ip_address, port);
+        	printf("IP: %s\nPort: %d\n", ip_address, port);
 
     	}
-
-	log_message(log_filename, "Selected Address: %s\n Selected Port: %d", ip_address, port);
+    	char message[100];
+    	sprintf(message, "Selected Address: %s\n Selected Port: %d", ip_address, port);
+    	log_message(serverLog_filename, message);
 
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
@@ -104,16 +106,21 @@ int main(int argc, char *argv[]){
 		close(socket_fd);
 		exit(EXIT_FAILURE);
 	}
-	log_message(log_filename, "Client Connected");
+	log_message(serverLog_filename, "Client Connected");
 	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
 		if (verbose) {
 			printf("Received Data: %s", buffer);
 		}
-		log_message(log_filename, "Received Request from Client");
+
+        char messageSent[100];
+        sprintf(messageSent, "Received Data: %s", buffer);
+        log_message(messageLog_filename, messageSent);
+
+		log_message(serverLog_filename, "Received Request from Client");
 	}
 	close(socket_fd);
-	log_message(log_filename, "Server shutting down");
+	log_message(serverLog_filename, "Server shutting down");
 	close(client_fd);
 	return 0;
 }
