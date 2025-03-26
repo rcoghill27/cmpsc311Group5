@@ -10,6 +10,13 @@
 #include <time.h>
 #include <stdarg.h>
 
+
+void process_verbose_flag(int verbose) {
+	if (verbose) {
+		printf("Verbose output enabled.\n");
+	}
+}
+
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
@@ -38,80 +45,94 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
 }
 
 int main(int argc, char *argv[]){
-    int socket_fd, result, client_fd;
-    char *ip_address = "127.0.0.1";
-    struct sockaddr_in server_address;
-    struct sockaddr_storage client_address;
-    socklen_t client_length = sizeof(client_address);
-    int port = 8080;
-    char buffer[1024];
-    char log_filename[] = "serverLog.txt";
-    ssize_t bytes_read;
-    int verbose = 0;
+	int socket_fd;
+	int result;
+	int client_fd;
+	char *ip_address = "127.0.0.1";
+	struct sockaddr_in server_address;
+	struct sockaddr_storage client_address;
+	socklen_t client_length = sizeof(client_address);
+	int port = 8080;
+	char buffer[1024];
+	char serverLog_filename[] = "serverLog.txt";
+  char messageLog_filename[] = "messageLog.txt";
+	ssize_t bytes_read;
+	int verbose = 0;
 
-    // Parse arguments for verbose flag
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
-            verbose = 1;
-        }
-    }
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+			verbose = 1;
+		}
+	}
 
-    verbose_log(verbose, log_filename, "Verbose output enabled");
-    verbose_log(verbose, log_filename, "Server Started");
+	process_verbose_flag(verbose);
+  
+  verbose_log(verbose, serverLog_filename, "Verbose output enabled");
+  verbose_log(verbose, serverLog_filename, "Server Started");
+	
+	// Create a socket
+	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    	log_message(serverLog_filename, "Server Started");
+	// Error handle socket
+	if (socket_fd == -1){
+		perror("socket");
+		exit(EXIT_FAILURE);
+	}
 
-    // Create a socket
-    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd == -1){
-        perror("socket");
-        exit(EXIT_FAILURE);
-    }
+    	if (argc == 3){
+    	    	ip_address = argv[1];
+    	    	port = atoi(argv[2]);
+    	}
 
-    if (argc == 3){
-        ip_address = argv[1];
-        port = atoi(argv[2]);
-    }
+	if (argc == 4) {
+		ip_address = argv[1];
+		port = atoi(argv[2]);
+	}
 
-    if (argc == 4) {
-        ip_address = argv[1];
-        port = atoi(argv[2]);
-    }
+    	if (verbose) {
+        	printf("IP: %s\nPort: %d\n", ip_address, port);
 
-    verbose_log(verbose, log_filename, "IP: %s\nPort: %d\n", ip_address, port);
+    	}
+    	char message[100];
+    	sprintf(message, "Selected Address: %s\n Selected Port: %d", ip_address, port);
+    	verbose_log(verbose, serverLog_filename, message);
 
-    // Create the address structure
-    memset(&server_address, 0, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = inet_addr(ip_address);
-    server_address.sin_port = htons(port);
+	// Create the address structure
+	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
+	server_address.sin_family = AF_INET;
+	server_address.sin_addr.s_addr = inet_addr(ip_address);
+	server_address.sin_port = htons(port);
 
-    // Bind to IP address
-    result = bind(socket_fd, (struct sockaddr*) &server_address, sizeof(server_address));
-    if (result < 0) {
-        perror("bind");
-        close(socket_fd);
-        exit(EXIT_FAILURE);
-    }
+	// Bind to IP address
+	result = bind(socket_fd, (struct sockaddr*) &server_address, sizeof(server_address));
+	if (result < 0) {
+	perror("bind");
+	close(socket_fd);
+	exit(EXIT_FAILURE);
+	}
 
-    result = listen(socket_fd, 5);
+	result = listen(socket_fd, 5);
 
-    client_fd = accept(socket_fd, (struct sockaddr*) &client_address, &client_length);
-    if (client_fd == -1){
-        perror("accept");
-        close(socket_fd);
-        exit(EXIT_FAILURE);
-    }
+	client_fd = accept(socket_fd, (struct sockaddr*) &client_address, &client_length);
 
-    verbose_log(verbose, log_filename, "Client Connected");
+	if (client_fd == -1){
+		perror("accept");
+		close(socket_fd);
+		exit(EXIT_FAILURE);
+	}
+	verbose_log(verbose, serverLog_filename, "Client Connected");
+	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
+		buffer[bytes_read] = '\0';
+	
 
-    while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0)) > 0){
-        buffer[bytes_read] = '\0';
-        verbose_log(verbose, log_filename, "Received Data: %s", buffer);
-        verbose_log(verbose, log_filename, "Recieved Request from Client");
-    }
+    char messageSent[100];
+    sprintf(messageSent, "Received Data: %s", buffer);
+    verbose_log(verbose, messageLog_filename, messageSent);
 
-    close(socket_fd);
-    verbose_log(verbose, log_filename,  "Server shutting down");
-    close(client_fd);
-
-    return 0;
+		verbose_log(verbose, serverLog_filename, "Received Request from Client");
+	}
+	close(socket_fd);
+	verbose_log(verbose, serverLog_filename, "Server shutting down");
+	close(client_fd);
+	return 0;
 }
