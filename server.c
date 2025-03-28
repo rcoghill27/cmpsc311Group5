@@ -56,13 +56,13 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	if (temArgc == 3) {
+	if (tempArgc == 3) {
 		ip_address = argv[1];
 		port = atoi(argv[2]);
-		displayName = argv[3];
+		strcpy(displayName, argv[3]);
 	}
 	if (tempArgc == 1) {
-		displayName = argv[3];
+		strcpy(displayName, argv[3]);
 	}
 
 	if (verbose) {
