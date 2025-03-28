@@ -11,7 +11,7 @@
 
 void process_verbose_flag(int verbose) {
 	if (verbose) {
-		printf("Verbose output enabled.\n")
+		printf("Verbose output enabled.\n");
 	}
 }
 
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]){
 	}
 
 	process_verbose_flag(verbose);
-	
+
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     	log_message(log_filename, "Server Started");
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]){
 
     	}
 
-	log_message(log_filename, "Selected Address: %s\n Selected Port: %d", ip_address, port);
+	//log_message(log_filename, "Selected Address: %s\n Selected Port: %d", ip_address, port);
 
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
