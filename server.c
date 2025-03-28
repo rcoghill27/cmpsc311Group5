@@ -11,12 +11,6 @@
 #include <stdarg.h>
 
 
-void process_verbose_flag(int verbose) {
-	if (verbose) {
-		printf("Verbose output enabled.\n");
-	}
-}
-
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
@@ -65,7 +59,6 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	process_verbose_flag(verbose);
   
   	verbose_log(verbose, serverLog_filename, "Verbose output enabled");
 	
