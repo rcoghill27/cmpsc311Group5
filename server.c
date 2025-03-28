@@ -45,12 +45,28 @@ int main(int argc, char *argv[]){
 	char buffer[1024];
 	char log_filename[] = "serverLog.txt";
 	ssize_t bytes_read;
-	int verbose =0;
+	int verbose = 0;
+	int tempArgc = argc - 1;
+	char displayName[1024];
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
 			verbose = 1;
+			tempArgc--;
 		}
+	}
+
+	if (temArgc == 3) {
+		ip_address = argv[1];
+		port = atoi(argv[2]);
+		displayName = argv[3];
+	}
+	if (tempArgc == 1) {
+		displayName = argv[3];
+	}
+
+	if (verbose) {
+		printf("IP: %s\nPort: %d\nDisplay Name: %s\n", ip_address, port, displayName);
 	}
 
 	process_verbose_flag(verbose);
@@ -63,21 +79,6 @@ int main(int argc, char *argv[]){
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
-
-    	if (argc == 3){
-    	    	ip_address = argv[1];
-    	    	port = atoi(argv[2]);
-    	}
-
-	if (argc == 4) {
-		ip_address = argv[1];
-		port = atoi(argv[2]);
-	}
-
-    	if (verbose) {
-    		printf("IP: %s\nPort: %d\n", ip_address, port);
-
-    	}
 
 	//log_message(log_filename, "Selected Address: %s\n Selected Port: %d", ip_address, port);
 
