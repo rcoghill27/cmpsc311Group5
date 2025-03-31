@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
 	
 
     char messageSent[100];
-    sprintf(messageSent, "Received Data: %s", buffer);
+    sprintf(messageSent, "%s: %s", displayName, buffer);
     verbose_log(verbose, messageLog_filename, messageSent);
 
 		verbose_log(verbose, serverLog_filename, "Received Request from Client");
