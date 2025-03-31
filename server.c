@@ -69,14 +69,12 @@ int main(int argc, char *argv[]){
 		strcpy(displayName, argv[3]);
 	}
 	if (tempArgc == 1) {
-		strcpy(displayName, argv[3]);
+		strcpy(displayName, argv[1]);
 	}
   
   char message[200];
   sprintf(message, "Selected Address: %s\n Selected Port: %d\nDisplay Name: %s\n", ip_address, port, displayName);
   verbose_log(verbose, serverLog_filename, message);
-
-	process_verbose_flag(verbose);
 
   
   	verbose_log(verbose, serverLog_filename, "Verbose output enabled");
@@ -130,7 +128,7 @@ int main(int argc, char *argv[]){
 		verbose_log(verbose, serverLog_filename, "Received Request from Client");
 	}
 	close(socket_fd);
-	verbose_log(verbose, serverLog_filename, "Server shutting down");
+	verbose_log(verbose, serverLog_filename, "Server shutting down\n");
 	close(client_fd);
 	return 0;
 }
