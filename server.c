@@ -52,12 +52,31 @@ int main(int argc, char *argv[]){
   char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
 	int verbose = 0;
+	int tempArgc = argc - 1;
+	char displayName[1024];
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
 			verbose = 1;
+			tempArgc--;
 		}
 	}
+
+
+	if (tempArgc == 3) {
+		ip_address = argv[1];
+		port = atoi(argv[2]);
+		strcpy(displayName, argv[3]);
+	}
+	if (tempArgc == 1) {
+		strcpy(displayName, argv[3]);
+	}
+  
+  char message[200];
+  sprintf(message, "Selected Address: %s\n Selected Port: %d\nDisplay Name: %s\n", ip_address, port, displayName);
+  verbose_log(verbose, serverLog_filename, message);
+
+	process_verbose_flag(verbose);
 
   
   	verbose_log(verbose, serverLog_filename, "Verbose output enabled");
@@ -71,19 +90,10 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
-    	if (argc == 3){
-    	    	ip_address = argv[1];
-    	    	port = atoi(argv[2]);
-    	}
 
-	if (argc == 4) {
-		ip_address = argv[1];
-		port = atoi(argv[2]);
-	}
 	
-    	char message[100];
-    	sprintf(message, "Selected Address: %s\n Selected Port: %d", ip_address, port);
-    	verbose_log(verbose, serverLog_filename, message);
+    	
+
 
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
