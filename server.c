@@ -9,7 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
-
+#include <pthread.h>
 
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
@@ -38,10 +38,23 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
     }
 }
 
+//client thread handler
+static void * client_handler (void *arg) {
+	//FIXME: placeholder test code
+	char *str = (char *) arg;
+	printf("ThreadFunc: Arguments passed to thread are: %s, pid = (%d)\n ", str, getpid());
+	sleep(2);
+	printf("\n ThreadFunc: exiting now\n");
+	return 0;
+}
+
 int main(int argc, char *argv[]){
+	static int MAX_CLIENTS = 10;
 	int socket_fd;
 	int result;
-	int client_fd;
+	int client_sockets[MAX_CLIENTS];
+	int client_count = 0;
+	int new_socket;
 	char *ip_address = "127.0.0.1";
 	struct sockaddr_in server_address;
 	struct sockaddr_storage client_address;
@@ -49,11 +62,12 @@ int main(int argc, char *argv[]){
 	int port = 8080;
 	char buffer[1024];
 	char serverLog_filename[] = "serverLog.txt";
-  char messageLog_filename[] = "messageLog.txt";
+	char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
 	int verbose = 0;
 	int tempArgc = argc - 1;
-	char displayName[1024];
+	char displayName[100];
+	pthread_t thread_id;
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
@@ -61,7 +75,6 @@ int main(int argc, char *argv[]){
 			tempArgc--;
 		}
 	}
-
 
 	if (tempArgc == 3) {
 		ip_address = argv[1];
@@ -71,27 +84,22 @@ int main(int argc, char *argv[]){
 	if (tempArgc == 1) {
 		strcpy(displayName, argv[1]);
 	}
-  
-  char message[200];
-  sprintf(message, "Selected Address: %s\n Selected Port: %d\nDisplay Name: %s\n", ip_address, port, displayName);
-  verbose_log(verbose, serverLog_filename, message);
 
-  
+	char message[1024];
+	sprintf(message, "Selected Address: %s\n Selected Port: %d\nDisplay Name: %s\n", ip_address, port, displayName);
+	verbose_log(verbose, serverLog_filename, message);
+	message[0] = '\0';
+
   	verbose_log(verbose, serverLog_filename, "Verbose output enabled");
-	
+
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    	verbose_log(verbose, serverLog_filename, "Server Started");
+    verbose_log(verbose, serverLog_filename, "Server Started");
 	// Error handle socket
-	if (socket_fd == -1){
+	if (socket_fd == -1) {
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
-
-
-	
-    	
-
 
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
@@ -102,33 +110,52 @@ int main(int argc, char *argv[]){
 	// Bind to IP address
 	result = bind(socket_fd, (struct sockaddr*) &server_address, sizeof(server_address));
 	if (result < 0) {
-	perror("bind");
-	close(socket_fd);
-	exit(EXIT_FAILURE);
+		perror("bind");
+		close(socket_fd);
+		exit(EXIT_FAILURE);
 	}
 
 	result = listen(socket_fd, 5);
+	verbose_log(verbose, serverLog_filename, "Listening to socket\n");
 
-	client_fd = accept(socket_fd, (struct sockaddr*) &client_address, &client_length);
+	while ((new_socket = accept(socket_fd, (struct sockaddr*) &client_address, &client_length)) >= 0) {
+		if (client_count < MAX_CLIENTS) {
+            client_sockets[client_count++] = new_socket;
+            sprintf(message, "New client connected, total clients: %d\n", client_count);
+			verbose_log(verbose, serverLog_filename, message);
 
+            // Create a thread to handle each client
+            if (pthread_create(&thread_id, NULL, client_handler, (void *)&new_socket) != 0) {
+                verbose_log(verbose, serverLog_filename, "Thread creation failed\n");
+                close(new_socket);
+            }
+        } else {
+            printf("Max clients reached, rejecting new connection\n");
+            close(new_socket);  // Reject new connection if max clients are reached
+        }
+    }
+	/* Delete?
 	if (client_fd == -1){
 		perror("accept");
 		close(socket_fd);
 		exit(EXIT_FAILURE);
 	}
-	verbose_log(verbose, serverLog_filename, "Client Connected");
+	*/
+	printf("test"); //FIXME: testing purposes only
+	/*
 	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
-	
 
-    char messageSent[100];
-    sprintf(messageSent, "%s: %s", displayName, buffer);
-    verbose_log(verbose, messageLog_filename, messageSent);
+
+	    char messageSent[100];
+	    sprintf(messageSent, "%s: %s", displayName, buffer);
+	    verbose_log(verbose, messageLog_filename, messageSent);
 
 		verbose_log(verbose, serverLog_filename, "Received Request from Client");
 	}
+	*/
 	close(socket_fd);
 	verbose_log(verbose, serverLog_filename, "Server shutting down\n");
-	close(client_fd);
+	//close(client_fd);
 	return 0;
 }
