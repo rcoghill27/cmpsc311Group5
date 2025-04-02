@@ -9,7 +9,10 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <pthread.h>
+
+bool shutDown = false;
 
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
@@ -48,6 +51,16 @@ static void * client_handler (void *arg) {
 	return 0;
 }
 
+static void handleSIGTERM(int sigNum) {
+
+    if (sigNum == SIGTERM)
+    {
+        shutDown = true;
+    }
+    exit (EXIT_SUCCESS); //default action
+}
+
+
 int main(int argc, char *argv[]){
 	static int MAX_CLIENTS = 10;
 	int socket_fd;
@@ -68,6 +81,7 @@ int main(int argc, char *argv[]){
 	int tempArgc = argc - 1;
 	char displayName[100];
 	pthread_t thread_id;
+  time_t currTime = time(NULL);
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
@@ -95,9 +109,19 @@ int main(int argc, char *argv[]){
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     verbose_log(verbose, serverLog_filename, "Server Started");
+   
+    sprintf(message,"\n Process ID is (%d) \n", getpid());
+    verbose_log(verbose, serverLog_filename, message);
+
+    if( signal(SIGTERM, handleSIGTERM) == SIG_ERR )
+    {
+        verbose_log(verbose, serverLog_filename, "Cannot handle SIGTERM!\n");
+        exit(-1);
+    }
+    
 	// Error handle socket
 	if (socket_fd == -1) {
-		perror("socket");
+		verbose_log(verbose, serverLog_filename, "Socket Error");
 		exit(EXIT_FAILURE);
 	}
 
@@ -110,7 +134,7 @@ int main(int argc, char *argv[]){
 	// Bind to IP address
 	result = bind(socket_fd, (struct sockaddr*) &server_address, sizeof(server_address));
 	if (result < 0) {
-		perror("bind");
+		verbose_log(verbose, serverLog_filename, "Bind Error");
 		close(socket_fd);
 		exit(EXIT_FAILURE);
 	}
@@ -121,6 +145,7 @@ int main(int argc, char *argv[]){
 	while ((new_socket = accept(socket_fd, (struct sockaddr*) &client_address, &client_length)) >= 0) {
 		if (client_count < MAX_CLIENTS) {
             client_sockets[client_count++] = new_socket;
+            
             sprintf(message, "New client connected, total clients: %d\n", client_count);
 			verbose_log(verbose, serverLog_filename, message);
 
@@ -136,7 +161,7 @@ int main(int argc, char *argv[]){
     }
 	/* Delete?
 	if (client_fd == -1){
-		perror("accept");
+		verbose_log(verbose, serverLog_filename, "Accept Error");
 		close(socket_fd);
 		exit(EXIT_FAILURE);
 	}
@@ -154,8 +179,19 @@ int main(int argc, char *argv[]){
 		verbose_log(verbose, serverLog_filename, "Received Request from Client");
 	}
 	*/
-	close(socket_fd);
-	verbose_log(verbose, serverLog_filename, "Server shutting down\n");
-	//close(client_fd);
+	//Shutting down server
+    if (shutDown) {
+
+        close(socket_fd);
+        verbose_log(verbose, serverLog_filename, "Server shutting down\n");
+        close(client_fd);
+
+        verbose_log(verbose, serverLog_filename, "\nCaught SIGTERM! Cleaning up... \n");
+
+        sprintf(message,"\n The program was terminated at: %s\n", ctime(&currTime));
+        verbose_log(verbose, serverLog_filename, message);
+    }
+	
 	return 0;
+
 }
