@@ -14,6 +14,7 @@
 #include <signal.h>
 
 bool shutDown = false;
+int verbose = 0;
 
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
@@ -46,10 +47,29 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
 static void * client_handler (void *arg) {
 	//FIXME: placeholder test code
 	char *str = (char *) arg;
-	printf("ThreadFunc: Arguments passed to thread are: %s, pid = (%d)\n ", str, getpid());
+	int *client_fd = (int *) arg;
+	printf("ThreadFunc: Arguments passed to thread are: %s, pid = (%d)\n", str, getpid());
+
+	ssize_t bytes_read;
+	char buffer[1024];
+	char displayName[64];
+	char messageSent[100];
+
+	while((bytes_read = recv(*client_fd, buffer, sizeof(buffer)-1, 0))> 0){
+		buffer[bytes_read] = '\0';
+
+	    sprintf(messageSent, "%s: %s", displayName, buffer);
+	    verbose_log(verbose, messageLog_filename, messageSent);
+
+		verbose_log(verbose, serverLog_filename, "Received Request from Client");
+	}
+
+
+	/*
 	sleep(2);
-	printf("\n ThreadFunc: exiting now\n");
+	printf("\nThreadFunc: exiting now\n");
 	return 0;
+	*/
 }
 
 static void handleSIGTERM(int sigNum) {
@@ -78,9 +98,7 @@ int main(int argc, char *argv[]){
 	char serverLog_filename[] = "serverLog.txt";
 	char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
-	int verbose = 0;
 	int tempArgc = argc - 1;
-	char displayName[100];
 	pthread_t thread_id;
 	time_t currTime = time(NULL);
 
@@ -94,14 +112,10 @@ int main(int argc, char *argv[]){
 	if (tempArgc == 3) {
 		ip_address = argv[1];
 		port = atoi(argv[2]);
-		strcpy(displayName, argv[3]);
-	}
-	if (tempArgc == 1) {
-		strcpy(displayName, argv[1]);
 	}
 
 	char message[1024];
-	sprintf(message, "Selected Address: %s\n Selected Port: %d\nDisplay Name: %s\n", ip_address, port, displayName);
+	sprintf(message, "Selected Address: %s\n Selected Port: %d\n", ip_address, port);
 	verbose_log(verbose, serverLog_filename, message);
 	message[0] = '\0';
 
@@ -169,16 +183,6 @@ int main(int argc, char *argv[]){
 	*/
 	printf("test"); //FIXME: testing purposes only
 	/*
-	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
-		buffer[bytes_read] = '\0';
-
-
-	    char messageSent[100];
-	    sprintf(messageSent, "%s: %s", displayName, buffer);
-	    verbose_log(verbose, messageLog_filename, messageSent);
-
-		verbose_log(verbose, serverLog_filename, "Received Request from Client");
-	}
 	*/
 	//Shutting down server
 	/*FIXME: loop and close each client and thread
