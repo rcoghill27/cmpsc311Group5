@@ -4,6 +4,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.MaskFormatter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.Socket;
 import java.util.ArrayList;
 
 public class ipScreen {
@@ -76,13 +77,21 @@ public class ipScreen {
                         }
                     }
                     writer.writeRememberedRoomFile(rooms);
-                    appWindow.setVisible(false);
-                    ChatWindow chatWindow = new ChatWindow(appWindow, displayName, ipAddress, port);
-                    appWindow.setContentPane(chatWindow.getPanel());
-                    appWindow.pack();
-                    appWindow.setSize(1000, 700);
-                    appWindow.setLocationRelativeTo(null);
-                    appWindow.setVisible(true);
+
+                    ClientSocket clientSocket = new ClientSocket();
+                    Socket serverSocket = clientSocket.connectToServer(appWindow, ipAddress, Integer.valueOf(port));
+                    if (serverSocket != null) {
+                        appWindow.setVisible(false);
+                        ChatWindow chatWindow = new ChatWindow(appWindow, displayName, ipAddress, port);
+                        appWindow.setContentPane(chatWindow.getPanel());
+                        appWindow.pack();
+                        appWindow.setSize(1000, 700);
+                        appWindow.setLocationRelativeTo(null);
+                        appWindow.setVisible(true);
+                    }
+                    else{
+                        System.out.println("Error Connecting");
+                    }
                 }
             }
         });
