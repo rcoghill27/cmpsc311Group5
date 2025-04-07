@@ -15,6 +15,8 @@
 
 bool shutDown = false;
 int verbose = 0;
+char serverLog_filename[] = "serverLog.txt";
+char messageLog_filename[] = "messageLog.txt";
 
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
@@ -45,15 +47,13 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
 
 //client thread handler
 static void * client_handler (void *arg) {
-	//FIXME: placeholder test code
-	char *str = (char *) arg;
 	int *client_fd = (int *) arg;
-	printf("ThreadFunc: Arguments passed to thread are: %s, pid = (%d)\n", str, getpid());
-
 	ssize_t bytes_read;
 	char buffer[1024];
 	char displayName[64];
-	char messageSent[100];
+	char messageSent[1090];
+
+	verbose_log(verbose, serverLog_filename, "Thread created (pid = (%d)), socket: %s", getpid(), *client_fd);
 
 	while((bytes_read = recv(*client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
@@ -95,8 +95,6 @@ int main(int argc, char *argv[]){
 	socklen_t client_length = sizeof(client_address);
 	int port = 8080;
 	char buffer[1024];
-	char serverLog_filename[] = "serverLog.txt";
-	char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
 	int tempArgc = argc - 1;
 	pthread_t thread_id;
