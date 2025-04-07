@@ -11,6 +11,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <signal.h>
 
 bool shutDown = false;
 
@@ -81,7 +82,7 @@ int main(int argc, char *argv[]){
 	int tempArgc = argc - 1;
 	char displayName[100];
 	pthread_t thread_id;
-  time_t currTime = time(NULL);
+	time_t currTime = time(NULL);
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
@@ -109,7 +110,7 @@ int main(int argc, char *argv[]){
 	// Create a socket
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     verbose_log(verbose, serverLog_filename, "Server Started");
-   
+
     sprintf(message,"\n Process ID is (%d) \n", getpid());
     verbose_log(verbose, serverLog_filename, message);
 
@@ -118,7 +119,7 @@ int main(int argc, char *argv[]){
         verbose_log(verbose, serverLog_filename, "Cannot handle SIGTERM!\n");
         exit(-1);
     }
-    
+
 	// Error handle socket
 	if (socket_fd == -1) {
 		verbose_log(verbose, serverLog_filename, "Socket Error");
@@ -145,7 +146,7 @@ int main(int argc, char *argv[]){
 	while ((new_socket = accept(socket_fd, (struct sockaddr*) &client_address, &client_length)) >= 0) {
 		if (client_count < MAX_CLIENTS) {
             client_sockets[client_count++] = new_socket;
-            
+
             sprintf(message, "New client connected, total clients: %d\n", client_count);
 			verbose_log(verbose, serverLog_filename, message);
 
@@ -180,6 +181,7 @@ int main(int argc, char *argv[]){
 	}
 	*/
 	//Shutting down server
+	/*FIXME: loop and close each client and thread
     if (shutDown) {
 
         close(socket_fd);
@@ -191,7 +193,8 @@ int main(int argc, char *argv[]){
         sprintf(message,"\n The program was terminated at: %s\n", ctime(&currTime));
         verbose_log(verbose, serverLog_filename, message);
     }
-	
+	*/
+
 	return 0;
 
 }
