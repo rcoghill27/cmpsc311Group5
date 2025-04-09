@@ -53,7 +53,7 @@ static void * client_handler (void* arg) {
 	char displayName[64];
 	char messageSent[1098];
 
-	sprintf(buffer, "Thread created (pid = (%d)), socket: %d", getpid(), client_fd);
+	sprintf(buffer, "Thread %d created, socket: %d", (int) pthread_self(), client_fd);
 	verbose_log(verbose, serverLog_filename, buffer);
 
 	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
@@ -65,10 +65,8 @@ static void * client_handler (void* arg) {
 		verbose_log(verbose, serverLog_filename, "Received Request from Client");
 	}
 
-
-	/*
-	sleep(2);*/
-	printf("\nThreadFunc: exiting now\n");
+	sprintf(buffer, "Thread %d exiting now", (int) pthread_self());
+	verbose_log(verbose, serverLog_filename, buffer);
 	return 0;
 
 }
