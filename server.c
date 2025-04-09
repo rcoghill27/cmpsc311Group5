@@ -46,14 +46,15 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
 }
 
 //client thread handler
-static void * client_handler (void *arg) {
+static void * client_handler (void* arg) {
 	int *client_fd = (int *) arg;
 	ssize_t bytes_read;
 	char buffer[1024];
 	char displayName[64];
-	char messageSent[1090];
+	char messageSent[1098];
 
-	verbose_log(verbose, serverLog_filename, "Thread created (pid = (%d)), socket: %s", getpid(), *client_fd);
+	sprintf(buffer, "Thread created (pid = (%d)), socket: %d", getpid(), *client_fd);
+	verbose_log(verbose, serverLog_filename, buffer);
 
 	while((bytes_read = recv(*client_fd, buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
@@ -66,10 +67,10 @@ static void * client_handler (void *arg) {
 
 
 	/*
-	sleep(2);
+	sleep(2);*/
 	printf("\nThreadFunc: exiting now\n");
 	return 0;
-	*/
+
 }
 
 static void handleSIGTERM(int sigNum) {
