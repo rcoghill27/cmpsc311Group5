@@ -25,7 +25,7 @@ public class ipScreen {
         joinButton.setVisible(false);
         removeButton.setVisible(false);
         try {
-            MaskFormatter ipMask = new MaskFormatter("###.###.#.###");
+            MaskFormatter ipMask = new MaskFormatter("##.##.##.###");
             ipMask.setPlaceholderCharacter('#');
             ipMask.install(ipTextField);
         } catch (Exception e){
@@ -54,45 +54,7 @@ public class ipScreen {
                 String displayName = displayTextField.getText();
                 String ipAddress = ipTextField.getText();
                 String port = portTextField.getText();
-                if(displayName.equals("") || ipAddress.equals("###.###.#.###") || port.equals("")){
-                    JOptionPane.showMessageDialog(appWindow, "One of more fields is blank.\nPlease fill in all information.", "Missing Information", JOptionPane.WARNING_MESSAGE);
-                }
-                else {
-                    RememberedRoom newRoom = new RememberedRoom();
-                    newRoom.setDisplayName(displayName);
-                    newRoom.setIpAddress(ipAddress);
-                    newRoom.setPort(port);
-                    if (rooms.size() == 0) {
-                        rooms.add(newRoom);
-                    } else {
-                        boolean addRoom = true;
-                        for (RememberedRoom room : rooms) {
-                            System.out.println(!(room.getIpAddress().equals(newRoom.getIpAddress()) && room.getPort() == newRoom.getPort()));
-                            if ((room.getIpAddress().equals(newRoom.getIpAddress()) && room.getPort() == newRoom.getPort())) {
-                                addRoom = false;
-                            }
-                        }
-                        if (addRoom) {
-                            rooms.add(newRoom);
-                        }
-                    }
-                    writer.writeRememberedRoomFile(rooms);
-
-                    ClientSocket clientSocket = new ClientSocket();
-                    Socket serverSocket = clientSocket.connectToServer(appWindow, ipAddress, Integer.valueOf(port));
-                    if (serverSocket != null) {
-                        appWindow.setVisible(false);
-                        ChatWindow chatWindow = new ChatWindow(appWindow, displayName, ipAddress, port);
-                        appWindow.setContentPane(chatWindow.getPanel());
-                        appWindow.pack();
-                        appWindow.setSize(1000, 700);
-                        appWindow.setLocationRelativeTo(null);
-                        appWindow.setVisible(true);
-                    }
-                    else{
-                        System.out.println("Error Connecting");
-                    }
-                }
+                joinRoom(appWindow, displayName, ipAddress, port);
             }
         });
         rememberedRoomsJList.addListSelectionListener(new ListSelectionListener() {
@@ -132,9 +94,61 @@ public class ipScreen {
                 removeButton.setEnabled(false);
             }
         });
+        joinButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int room = rememberedRoomsJList.getSelectedIndex();
+                RememberedRoom selectedRoom = rooms.get(room);
+                joinRoom(appWindow, selectedRoom.getDisplayName(), selectedRoom.getIpAddress(), String.valueOf(selectedRoom.getPort()));
+            }
+        });
     }
 
     public JPanel getPanel(){
         return this.ipPanel;
     }
+    private void joinRoom(JFrame appWindow, String displayName, String ipAddress, String port){
+
+        if(displayName.equals("") || ipAddress.equals("###.###.#.###") || port.equals("")){
+            JOptionPane.showMessageDialog(appWindow, "One of more fields is blank.\nPlease fill in all information.", "Missing Information", JOptionPane.WARNING_MESSAGE);
+        }
+        else {
+            RememberedRoom newRoom = new RememberedRoom();
+            newRoom.setDisplayName(displayName);
+            newRoom.setIpAddress(ipAddress);
+            newRoom.setPort(port);
+            if (rooms.size() == 0) {
+                rooms.add(newRoom);
+            } else {
+                boolean addRoom = true;
+                for (RememberedRoom room : rooms) {
+                    System.out.println(!(room.getIpAddress().equals(newRoom.getIpAddress()) && room.getPort() == newRoom.getPort()));
+                    if ((room.getIpAddress().equals(newRoom.getIpAddress()) && room.getPort() == newRoom.getPort())) {
+                        addRoom = false;
+                    }
+                }
+                if (addRoom) {
+                    rooms.add(newRoom);
+                }
+            }
+            writer.writeRememberedRoomFile(rooms);
+
+            //ClientSocket clientSocket = new ClientSocket();
+            //Socket serverSocket = clientSocket.connectToServer(appWindow, ipAddress, Integer.valueOf(port));
+            //System.out.println("Ip Screen : Is closed: " + serverSocket.isClosed());
+            //if (serverSocket != null) {
+            appWindow.setVisible(false);
+            ChatWindow chatWindow = new ChatWindow(appWindow, displayName, ipAddress, port);
+            appWindow.setContentPane(chatWindow.getPanel());
+            appWindow.pack();
+            appWindow.setSize(1000, 700);
+            appWindow.setLocationRelativeTo(null);
+            appWindow.setVisible(true);
+            //}
+            //else{
+            // System.out.println("Error Connecting");
+            //}
+        }
+    }
 }
+
