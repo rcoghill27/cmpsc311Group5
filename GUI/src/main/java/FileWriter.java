@@ -18,14 +18,16 @@ public class FileWriter {
     }
 
     public ArrayList<RememberedRoom> readRememberedRoomFile(){
+        ArrayList<RememberedRoom> roomList = new ArrayList<>();
         try{
+
             File inputFile = new File("rememberedRooms.txt");
             FileInputStream inputStream = new FileInputStream(inputFile);
             ObjectInputStream objectStream = new ObjectInputStream(inputStream);
             boolean running = true;
-            ArrayList<RememberedRoom> roomList = new ArrayList<>();
             while(running){
                 RememberedRoom room = (RememberedRoom) objectStream.readObject();
+                System.out.println("Read room in loop: " + room);
                 if (room != null) {
                     roomList.add(room);
                 }
@@ -33,10 +35,13 @@ public class FileWriter {
                     running = false;
                 }
             }
+            System.out.println("Room List:" + roomList);
             return roomList;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        } catch (EOFException ignored) {
+
+        } catch (Exception ex){
+            System.out.println("It broke");
         }
-        return null;
+        return roomList;
     }
 }
