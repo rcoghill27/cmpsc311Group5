@@ -18,6 +18,9 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 
+#define MAX_CLIENTS 10
+
+int client_sockets[MAX_CLIENTS] = {-1};
 bool shutDown = false;
 int verbose = 0;
 char serverLog_filename[] = "serverLog.txt";
@@ -91,22 +94,32 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
 
 //client thread handler
 static void * client_handler (void* arg) {
-	int client_fd = *(int*) arg;
+	int client_pos = *(int*) arg;
 	ssize_t bytes_read;
+	ssize_t bytes_sent;
 	char buffer[1024];
 	char displayName[64];
 	char messageSent[1098];
 
-	sprintf(buffer, "Thread %d created, socket: %d", (int) pthread_self(), client_fd);
+	pthread_detach(pthread_self());
+
+	sprintf(buffer, "Thread %d created, socket: %d", (int) pthread_self(), client_sockets[client_pos]);
 	verbose_log(verbose, serverLog_filename, buffer);
 
-	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
+	while((bytes_read = recv(client_sockets[client_pos], buffer, sizeof(buffer)-1, 0))> 0){
 		buffer[bytes_read] = '\0';
 
 	    sprintf(messageSent, "%s: %s", displayName, buffer);
 	    verbose_log(verbose, messageLog_filename, messageSent);
 
 		verbose_log(verbose, serverLog_filename, "Received Request from Client");
+
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			bytes_sent = send(client_sockets[i], messageSent, strlen(messageSent), 0);
+			if (bytes_sent == -1) {
+				verbose_log(verbose, serverLog_filename, "Failed to send message");
+			}
+		}
 	}
 
 	sprintf(buffer, "Thread %d exiting now", (int) pthread_self());
@@ -126,10 +139,8 @@ static void handleSIGTERM(int sigNum) {
 
 
 int main(int argc, char *argv[]){
-	static int MAX_CLIENTS = 10;
 	int socket_fd;
 	int result;
-	int client_sockets[MAX_CLIENTS];
 	int client_count = 0;
 	int new_socket;
 	char *ip_address = get_ip_address();
@@ -208,16 +219,17 @@ int main(int argc, char *argv[]){
 
 	while ((new_socket = accept(socket_fd, (struct sockaddr*) &client_address, &client_length)) >= 0) {
 		if (client_count < MAX_CLIENTS) {
-            client_sockets[client_count++] = new_socket;
+            client_sockets[client_count] = new_socket;
 
-            sprintf(message, "New client connected, total clients: %d\n", client_count);
+            sprintf(message, "New client connected, total clients: %d\n", client_count+1);
 			verbose_log(verbose, serverLog_filename, message);
 
             // Create a thread to handle each client
-            if (pthread_create(&thread_id, NULL, client_handler, (void *)&new_socket) != 0) {
+            if (pthread_create(&thread_id, NULL, client_handler, (void *)&client_count) != 0) {
                 verbose_log(verbose, serverLog_filename, "Thread creation failed\n");
                 close(new_socket);
             }
+			client_count++;
         } else {
             printf("Max clients reached, rejecting new connection\n");
             close(new_socket);  // Reject new connection if max clients are reached
