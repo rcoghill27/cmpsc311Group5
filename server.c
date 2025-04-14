@@ -12,6 +12,10 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 
 bool shutDown = false;
 int verbose = 0;
@@ -22,6 +26,45 @@ void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     strftime(timestamp, len, "%m-%d-%Y %H:%M:%S", tm_info);
+}
+
+// Function to get the first non-loopback IPv4 address
+char* get_ip_address() {
+	static char host[NI_MAXHOST]; // static to ensure it persists after function returns
+	struct ifaddrs *ifaddr, *ifa;
+	int family, s;
+
+	// Error if you can't get the interface address
+	if (getifaddrs(&ifaddr) == -1) {
+		perror("getifaddrs");
+		return NULL;
+	}
+
+	// Loop through each address
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		// Skip the interface if it doesn't have an IP
+		if (ifa->ifa_addr == NULL)
+			continue;
+
+		family = ifa->ifa_addr->sa_family;
+
+		// IPv4 Addresses
+		if (family == AF_INET) {
+			s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+				host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+			if (s != 0) {
+				printf("getnameinfo() failed: %s\n", gai_strerror(s));
+				continue;
+			}
+			// Skip loopback addresses (127.0.0.1)
+			if (strcmp(host, "127.0.0.1") != 0) {
+				freeifaddrs(ifaddr); // Free the memory used by getifaddrs
+				return host;
+			}
+		}
+	}
+	freeifaddrs(ifaddr); // Free the memory used by getifaddrs
+	return NULL; // No non-loopback IPv4 address found
 }
 
 // merged the verbose function and the log_file function
@@ -88,7 +131,7 @@ int main(int argc, char *argv[]){
 	int client_sockets[MAX_CLIENTS];
 	int client_count = 0;
 	int new_socket;
-	char *ip_address = "127.0.0.1";
+	char *ip_address = get_ip_address();
 	struct sockaddr_in server_address;
 	struct sockaddr_storage client_address;
 	socklen_t client_length = sizeof(client_address);
@@ -104,6 +147,14 @@ int main(int argc, char *argv[]){
 			verbose = 1;
 			tempArgc--;
 		}
+	}
+
+	if(ip_address != NULL) {
+		char message1[200];
+		sprintf(message1, "Default IPv4 address: %s\n", ip_address);
+		verbose_log(verbose, serverLog_filename, message1);
+	} else{
+		verbose_log(verbose, serverLog_filename, "No non-loopback IPv4 address found.\n");
 	}
 
 	if (tempArgc == 3) {
