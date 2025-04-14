@@ -25,7 +25,8 @@ public class ipScreen {
         joinButton.setVisible(false);
         removeButton.setVisible(false);
         try {
-            MaskFormatter ipMask = new MaskFormatter("##.##.##.###");
+            MaskFormatter ipMask = new MaskFormatter("##.##.###.###");
+            //MaskFormatter ipMask = new MaskFormatter("###.###.#.###");
             ipMask.setPlaceholderCharacter('#');
             ipMask.install(ipTextField);
         } catch (Exception e){

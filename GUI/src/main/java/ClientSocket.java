@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ClientSocket {
     public Socket connectToServer(JFrame appWindow, String ipAddress, int port) {
@@ -36,19 +37,18 @@ public class ClientSocket {
     }
     public void sendMessages(Socket serverSocket, String userMessage){
         try{
-            PrintWriter output = new PrintWriter(serverSocket.getOutputStream());
-            String message = userMessage;
-            output.println(message);
-            System.out.println(message);
+            PrintWriter output = new PrintWriter(serverSocket.getOutputStream(), true);
+            output.println(userMessage);
+            System.out.println(userMessage);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
-    public void readMessages(Socket serverSocket){
+    public void readMessages(Socket serverSocket, ArrayList<String> messageArray){
         try {
 
             BufferedReader input = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-            Thread receiveThread = new Thread(new ReceiveMessages(input));
+            Thread receiveThread = new Thread(new ReceiveMessages(input, messageArray));
             receiveThread.start();
         }catch (Exception ignored){
 
@@ -57,14 +57,17 @@ public class ClientSocket {
 }
 class ReceiveMessages implements Runnable{
     private BufferedReader input;
-    public ReceiveMessages(BufferedReader input){
+    ArrayList<String> messageArray;
+    public ReceiveMessages(BufferedReader input,ArrayList<String> messageArray ){
         this.input = input;
+        this.messageArray = messageArray;
     }
     public void run(){
         try{
             String serverMessage;
             while((serverMessage = String.valueOf(input.readLine())) != null){
                 System.out.println(serverMessage);
+                messageArray.add(serverMessage);
             }
         } catch (IOException e){
             System.out.println("Error receiving message.");

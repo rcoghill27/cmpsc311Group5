@@ -1,3 +1,4 @@
+
 //Jack
 //Sheon
 //Ryan
@@ -12,13 +13,59 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 
 bool shutDown = false;
+int verbose = 0;
+char serverLog_filename[] = "serverLog.txt";
+char messageLog_filename[] = "messageLog.txt";
 
 void get_timestamp(char* timestamp, size_t len){
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     strftime(timestamp, len, "%m-%d-%Y %H:%M:%S", tm_info);
+}
+
+// Function to get the first non-loopback IPv4 address
+char* get_ip_address() {
+	static char host[NI_MAXHOST]; // static to ensure it persists after function returns
+	struct ifaddrs *ifaddr, *ifa;
+	int family, s;
+
+	// Error if you can't get the interface address
+	if (getifaddrs(&ifaddr) == -1) {
+		perror("getifaddrs");
+		return NULL;
+	}
+
+	// Loop through each address
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		// Skip the interface if it doesn't have an IP
+		if (ifa->ifa_addr == NULL)
+			continue;
+
+		family = ifa->ifa_addr->sa_family;
+
+		// IPv4 Addresses
+		if (family == AF_INET) {
+			s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+				host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+			if (s != 0) {
+				printf("getnameinfo() failed: %s\n", gai_strerror(s));
+				continue;
+			}
+			// Skip loopback addresses (127.0.0.1)
+			if (strcmp(host, "127.0.0.1") != 0) {
+				freeifaddrs(ifaddr); // Free the memory used by getifaddrs
+				return host;
+			}
+		}
+	}
+	freeifaddrs(ifaddr); // Free the memory used by getifaddrs
+	return NULL; // No non-loopback IPv4 address found
 }
 
 // merged the verbose function and the log_file function
@@ -43,13 +90,29 @@ void verbose_log(int verbose, const char *filename, const char *format, ...) {
 }
 
 //client thread handler
-static void * client_handler (void *arg) {
-	//FIXME: placeholder test code
-	char *str = (char *) arg;
-	printf("ThreadFunc: Arguments passed to thread are: %s, pid = (%d)\n ", str, getpid());
-	sleep(2);
-	printf("\n ThreadFunc: exiting now\n");
+static void * client_handler (void* arg) {
+	int client_fd = *(int*) arg;
+	ssize_t bytes_read;
+	char buffer[1024];
+	char displayName[64];
+	char messageSent[1098];
+
+	sprintf(buffer, "Thread %d created, socket: %d", (int) pthread_self(), client_fd);
+	verbose_log(verbose, serverLog_filename, buffer);
+
+	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
+		buffer[bytes_read] = '\0';
+
+	    sprintf(messageSent, "%s: %s", displayName, buffer);
+	    verbose_log(verbose, messageLog_filename, messageSent);
+
+		verbose_log(verbose, serverLog_filename, "Received Request from Client");
+	}
+
+	sprintf(buffer, "Thread %d exiting now", (int) pthread_self());
+	verbose_log(verbose, serverLog_filename, buffer);
 	return 0;
+
 }
 
 static void handleSIGTERM(int sigNum) {
@@ -69,18 +132,14 @@ int main(int argc, char *argv[]){
 	int client_sockets[MAX_CLIENTS];
 	int client_count = 0;
 	int new_socket;
-	char *ip_address = "127.0.0.1";
+	char *ip_address = get_ip_address();
 	struct sockaddr_in server_address;
 	struct sockaddr_storage client_address;
 	socklen_t client_length = sizeof(client_address);
 	int port = 8080;
 	char buffer[1024];
-	char serverLog_filename[] = "serverLog.txt";
-	char messageLog_filename[] = "messageLog.txt";
 	ssize_t bytes_read;
-	int verbose = 0;
 	int tempArgc = argc - 1;
-	char displayName[100];
 	pthread_t thread_id;
 	time_t currTime = time(NULL);
 
@@ -91,17 +150,21 @@ int main(int argc, char *argv[]){
 		}
 	}
 
+	if(ip_address != NULL) {
+		char message1[200];
+		sprintf(message1, "Default IPv4 address: %s\n", ip_address);
+		verbose_log(verbose, serverLog_filename, message1);
+	} else{
+		verbose_log(verbose, serverLog_filename, "No non-loopback IPv4 address found.\n");
+	}
+
 	if (tempArgc == 3) {
 		ip_address = argv[1];
 		port = atoi(argv[2]);
-		strcpy(displayName, argv[3]);
-	}
-	if (tempArgc == 1) {
-		strcpy(displayName, argv[1]);
 	}
 
 	char message[1024];
-	sprintf(message, "Selected Address: %s\n Selected Port: %d\nDisplay Name: %s\n", ip_address, port, displayName);
+	sprintf(message, "Selected Address: %s\n Selected Port: %d\n", ip_address, port);
 	verbose_log(verbose, serverLog_filename, message);
 	message[0] = '\0';
 
@@ -169,16 +232,6 @@ int main(int argc, char *argv[]){
 	*/
 	printf("test"); //FIXME: testing purposes only
 	/*
-	while((bytes_read = recv(client_fd, buffer, sizeof(buffer)-1, 0))> 0){
-		buffer[bytes_read] = '\0';
-
-
-	    char messageSent[100];
-	    sprintf(messageSent, "%s: %s", displayName, buffer);
-	    verbose_log(verbose, messageLog_filename, messageSent);
-
-		verbose_log(verbose, serverLog_filename, "Received Request from Client");
-	}
 	*/
 	//Shutting down server
 	/*FIXME: loop and close each client and thread
