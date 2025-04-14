@@ -191,7 +191,7 @@ int main(int argc, char *argv[]){
 	// Create the address structure
 	memset(&server_address, 0, sizeof(server_address)); // Sets to 0
 	server_address.sin_family = AF_INET;
-	server_address.sin_addr.s_addr = inet_addr(ip_address);
+	server_address.sin_addr.s_addr = INADDR_ANY;
 	server_address.sin_port = htons(port);
 
 	// Bind to IP address
