@@ -86,7 +86,7 @@ public class ChatWindow {
             nameLabel.setText(displayName);
             addressLabel.setText(ipAddress);
             portLabel.setText(port);
-            // Sends a message to the server to let is know the user's display name to update members list.
+            // Sends a message to the server to let it know the user's display name to update members list.
             clientSocket.sendMessages(serverSocket, "DisplayName&#" + displayName);
             // Initializes style attributes for the chat window.
             SimpleAttributeSet rightAlign = new SimpleAttributeSet();
@@ -175,6 +175,7 @@ public class ChatWindow {
 
                     // Checks the size of the member array to see if an update has occurred.
                     if (memberArray.size() != 0) {
+                        clientSocket.sendMessages(serverSocket, "DisplayName&#" + displayName);
                         // Takes the names from the memberNamesArray and creates a string array.
                         String[] memberNames = new String[memberNamesArray.size()];
 

@@ -27,8 +27,18 @@ public class ReceiveMessages implements Runnable{
                 }
                 // Adds it the memberNameArray and to memberArray to trigger list update.
                 else if(messageSplit[0].equals(": DisplayName")){
-                    memberArray.add(messageSplit[1]);
-                    memberNameArray.add(messageSplit[1]);
+
+                    boolean nameFound = false;
+                    for (String name : memberNameArray){
+                        if (name.equals(messageSplit[1])){
+                            nameFound = true;
+                        }
+                    }
+                    if (!nameFound){
+                        memberArray.add(messageSplit[1]);
+                        memberNameArray.add(messageSplit[1]);
+                    }
+
                 }
                 // Removes the name from the member list and adds it memberArray to trigger list update.
                 else if(messageSplit[0].equals(": RemoveMember")){
