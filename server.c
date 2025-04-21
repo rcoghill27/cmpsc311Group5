@@ -142,8 +142,25 @@ static void * client_handler (void* arg) {
 
 static void handleSIGTERM(int sigNum) {
         time_t currTime = time(NULL);
+	ssize_t bytes_sent;
+	char message[1024];
+
         if (sigNum == SIGINT || sigNum == SIGTERM)
         {
+
+
+			for (int i = 0; i < MAX_CLIENTS; i++) {
+//				message = "Server shutting down.";
+				sprintf(message, "Server shutdown");
+				if (client_sockets[i] >= 0) {
+					bytes_sent = send(client_sockets[i], message, strlen(message), 0);
+					if (bytes_sent == -1) {
+						verbose_log(verbose, serverLog_filename, "Failed to send message");
+					}
+				}
+			}
+
+
                 close(socket_fd);
                 verbose_log(verbose, serverLog_filename, "\nCaught SIGTERM! Cleaning up... \n");
 
@@ -152,7 +169,6 @@ static void handleSIGTERM(int sigNum) {
                         close(client_sockets[i]);
                 }
 
-                char message[1024];
                 sprintf(message,"\nThe program was terminated at: %s\n", ctime(&currTime));
                 verbose_log(verbose, serverLog_filename, message);
 
