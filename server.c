@@ -125,11 +125,16 @@ static void * client_handler (void* arg) {
 		}
 	}
 
-	sprintf(buffer, "Thread %d exiting now", (int) pthread_self());
+	sprintf(buffer, "Client %d disconnecting", (int) client_pos);
 	verbose_log(verbose, serverLog_filename, buffer);
 	client_sockets[client_pos] = -1;
 	client_count--;
-	return 0;
+	sprintf(buffer, "Client count: %d", (int) client_count);
+	verbose_log(verbose, serverLog_filename, buffer);
+
+	sprintf(buffer, "Thread %d exiting now", (int) pthread_self());
+	verbose_log(verbose, serverLog_filename, buffer);
+	pthread_exit(NULL);
 
 }
 
@@ -231,7 +236,6 @@ int main(int argc, char *argv[]){
 			for (int i = 0; i < MAX_CLIENTS; i++) {
 				if (client_sockets[i] == -1) {
 					curr_client_socket = i;
-					client_count++;
 					break;
 				}
 			}
