@@ -21,6 +21,7 @@
 #define MAX_CLIENTS 10
 
 int client_sockets[MAX_CLIENTS];
+int socket_fd;
 int client_count = 0;
 bool shutDown = false;
 int verbose = 0;
@@ -138,18 +139,29 @@ static void * client_handler (void* arg) {
 
 }
 
-static void handleSIGTERM(int sigNum) {
 
-    if (sigNum == SIGTERM)
-    {
-        shutDown = true;
-    }
-    exit (EXIT_SUCCESS); //default action
+static void handleSIGTERM(int sigNum) {
+        time_t currTime = time(NULL);
+        if (sigNum == SIGINT || sigNum == SIGTERM)
+        {
+                close(socket_fd);
+                verbose_log(verbose, serverLog_filename, "\nCaught SIGTERM! Cleaning up... \n");
+
+                verbose_log(verbose, serverLog_filename, "Server shutting down\n");
+                for(int i = 0; i < MAX_CLIENTS; i++) {
+                        close(client_sockets[i]);
+                }
+
+                char message[1024];
+                sprintf(message,"\nThe program was terminated at: %s\n", ctime(&currTime));
+                verbose_log(verbose, serverLog_filename, message);
+
+        }    
+        exit (EXIT_SUCCESS); //default action
 }
 
 
 int main(int argc, char *argv[]){
-	int socket_fd;
 	int result;
 	int curr_client_socket = 0;
 	int new_socket;
@@ -202,7 +214,7 @@ int main(int argc, char *argv[]){
     sprintf(message,"Process ID is (%d)", getpid());
     verbose_log(verbose, serverLog_filename, message);
 
-    if( signal(SIGTERM, handleSIGTERM) == SIG_ERR )
+    if( signal(SIGINT, handleSIGTERM) == SIG_ERR || signal(SIGTERM, handleSIGTERM) == SIG_ERR)
     {
         verbose_log(verbose, serverLog_filename, "Cannot handle SIGTERM!\n");
         exit(-1);
@@ -258,30 +270,7 @@ int main(int argc, char *argv[]){
             close(new_socket);  // Reject new connection if max clients are reached
         }
     }
-	/* Delete?
-	if (client_fd == -1){
-		verbose_log(verbose, serverLog_filename, "Accept Error");
-		close(socket_fd);
-		exit(EXIT_FAILURE);
-	}
-	*/
-	//printf("test"); //FIXME: testing purposes only
-	/*
-	*/
-	//Shutting down server
-	/*FIXME: loop and close each client and thread
-    if (shutDown) {
-
-        close(socket_fd);
-        verbose_log(verbose, serverLog_filename, "Server shutting down\n");
-        close(client_fd);
-
-        verbose_log(verbose, serverLog_filename, "\nCaught SIGTERM! Cleaning up... \n");
-
-        sprintf(message,"\n The program was terminated at: %s\n", ctime(&currTime));
-        verbose_log(verbose, serverLog_filename, message);
-    }
-	*/
+	
 
 	return 0;
 
