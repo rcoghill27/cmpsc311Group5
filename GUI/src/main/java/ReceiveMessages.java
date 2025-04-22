@@ -2,7 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class ReceiveMessages implements Runnable{
+public class ReceiveMessages{
     private final BufferedReader input;
     private final ArrayList<String> memberNameArray;
     private final ArrayList<String> messageArray;
@@ -14,11 +14,12 @@ public class ReceiveMessages implements Runnable{
         this.memberArray = memberArray;
         this.memberNameArray = memberNameArray;
     }
-    public void run(){
+    public void read(){
         try{
             String serverMessage;
             // Loop to continuously read through messages received from the server.
-            while((serverMessage = String.valueOf(input.readLine())) != null){
+            while((serverMessage = String.valueOf(input.readLine())) != null && !serverMessage.equals("null")){
+                //System.out.println(serverMessage);
                 // Splits the message at the designated separator.
                 String[] messageSplit = serverMessage.split("&#");
                 // Adds it to the messageArray to be displayed in the chat window.
@@ -44,6 +45,10 @@ public class ReceiveMessages implements Runnable{
                 else if(messageSplit[0].equals(": RemoveMember")){
                     memberArray.add(messageSplit[1]);
                     memberNameArray.remove(messageSplit[1]);
+                }
+                else if (messageSplit[0].equals("ServerShutdown")){
+                    messageArray.add("Notification:"+ messageSplit[1]);
+
                 }
             }
         } catch (IOException ignored){

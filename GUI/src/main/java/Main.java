@@ -74,8 +74,10 @@ public class Main {
             }
             // Centers the window in the middle of the screen.
             appWindow.setLocationRelativeTo(null);
+            appWindow.setResizable(false);
             appWindow.setVisible(true);
         } catch (Exception ignored){
         }
     }
 }
+

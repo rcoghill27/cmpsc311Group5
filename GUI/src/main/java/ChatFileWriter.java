@@ -47,14 +47,14 @@ public class ChatFileWriter {
 
         return roomList;
     }
-    public void writeSettingsFile(int fullScreen, String theme){
+    public void writeSettingsFile(int fullScreen, int notifications,  String theme){
         try {
             // Creates a file and file writer.
             File settingsFile = new File("settings.txt");
             FileWriter writer = new FileWriter(settingsFile);
             BufferedWriter buff = new BufferedWriter(writer);
             // Creates a single string with the theme and int for fullscreen split by a comma and writes it.
-            buff.write(theme + "," + fullScreen);
+            buff.write(theme + "," + fullScreen + "," + notifications);
             // Closes writers.
             buff.close();
             writer.close();
