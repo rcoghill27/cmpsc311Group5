@@ -145,7 +145,7 @@ static void handleSIGTERM(int sigNum) {
 	ssize_t bytes_sent;
 	char message[1024];
 
-        if (sigNum == SIGINT || sigNum == SIGTERM)
+        if (sigNum == SIGTERM)
         {
 
 
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]){
     sprintf(message,"Process ID is (%d)", getpid());
     verbose_log(verbose, serverLog_filename, message);
 
-    if( signal(SIGINT, handleSIGTERM) == SIG_ERR || signal(SIGTERM, handleSIGTERM) == SIG_ERR)
+    if( signal(SIGTERM, handleSIGTERM) == SIG_ERR)
     {
         verbose_log(verbose, serverLog_filename, "Cannot handle SIGTERM!\n");
         exit(-1);
