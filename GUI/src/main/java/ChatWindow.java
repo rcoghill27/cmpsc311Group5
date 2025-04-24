@@ -317,11 +317,12 @@ public class ChatWindow {
 
 
                     try {
-
-                        // Closes the socket
-                        serverSocket.close();
                         // Breaks the loop that is reading messages from the server.
                         reading = false;
+                        // Closes the socket
+                        serverSocket.close();
+
+
                         timeThread.join();
                         memberListThread.join();
                         chatWindowThread.join();

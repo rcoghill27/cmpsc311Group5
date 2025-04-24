@@ -47,7 +47,7 @@ public class ReceiveMessages{
                 }
 
                 // Removes the name from the member list and adds it memberArray to trigger list update.
-                else if(messageSplit[0].equals(": RemoveMember")){
+                else if(messageSplit[0].equals("RemoveMember") || messageSplit[0].equals(": RemoveMember")){
                     memberArray.add(messageSplit[1]);
                     memberNameArray.remove(messageSplit[1]);
                 }
