@@ -7,14 +7,16 @@ public class ReceiveMessages{
     private final ArrayList<String> memberNameArray;
     private final ArrayList<String> messageArray;
     private final ArrayList<String> memberArray;
+
     public ReceiveMessages(BufferedReader input,ArrayList<String> messageArray, ArrayList<String> memberArray, ArrayList<String> memberNameArray){
         // Default constructor for the class.
         this.input = input;
         this.messageArray = messageArray;
         this.memberArray = memberArray;
         this.memberNameArray = memberNameArray;
+
     }
-    public void read(){
+    public void read(int id){
         try{
             String serverMessage;
             // Loop to continuously read through messages received from the server.
@@ -30,17 +32,20 @@ public class ReceiveMessages{
                 else if(messageSplit[0].equals(": DisplayName")){
 
                     boolean nameFound = false;
-                    for (String name : memberNameArray){
-                        if (name.equals(messageSplit[1])){
+                    for (String name : memberNameArray) {
+                        if (name.equals(messageSplit[1])) {
                             nameFound = true;
                         }
                     }
+
                     if (!nameFound){
                         memberArray.add(messageSplit[1]);
                         memberNameArray.add(messageSplit[1]);
                     }
 
+
                 }
+
                 // Removes the name from the member list and adds it memberArray to trigger list update.
                 else if(messageSplit[0].equals(": RemoveMember")){
                     memberArray.add(messageSplit[1]);

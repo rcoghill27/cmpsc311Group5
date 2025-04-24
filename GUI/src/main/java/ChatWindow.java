@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.time.LocalTime;
+import java.util.Random;
 
 public class ChatWindow {
     // Swing GUI variables.
@@ -46,6 +47,7 @@ public class ChatWindow {
     private boolean connectionEstablished = true;
     private boolean typing = false;
     private boolean notifications = false;
+    private int id;
 
 
 
@@ -93,6 +95,11 @@ public class ChatWindow {
             portLabel.setText(port);
             dateLabel.setText(getDate());
             ChatFileWriter writer1 = new ChatFileWriter();
+
+            // Generates a random number for an id to differentiate users.
+            Random generator = new Random();
+            id = generator.nextInt(0, 100);
+
             String notificationsSetting = writer1.readSettingsFile().split(",")[2];
             if (notificationsSetting.equals("1")){
                 notifications  = true;
@@ -101,7 +108,9 @@ public class ChatWindow {
                 notifications = false;
             }
             // Sends a message to the server to let it know the user's display name to update members list.
-            sendServerMessages(serverSocket, "DisplayName&#" + displayName);
+            //sendServerMessages(serverSocket, "DisplayNameRequest&#" + displayName);
+            //memberNamesArray.add(displayName);
+            sendServerMessages(serverSocket, "DisplayName&#" + displayName + "#" + id);
             // Initializes style attributes for the chat window.
             SimpleAttributeSet rightAlign = new SimpleAttributeSet();
             SimpleAttributeSet leftAlign = new SimpleAttributeSet();
@@ -145,9 +154,9 @@ public class ChatWindow {
             Thread readingThread = new Thread(() -> {
                 try {
 
-                    // Creates an object of the receive Messages class and calls the method to read. from the server.
+                    // Creates an object of the Receive Messages class and calls the method to read. from the server.
                     ReceiveMessages receiver = new ReceiveMessages(finalInput, messageArray, memberArray, memberNamesArray);
-                    receiver.read();
+                    receiver.read(id);
                 }catch (Exception ignored){
                 }
             });
@@ -200,8 +209,8 @@ public class ChatWindow {
 
                             try {
                                 // If the message was sent by the user, displays it on the right side of the screen.
-                                if (messageSplit[0].equals(displayName)) {
-                                    htmlDoc.insertString(0, messageSplit[1] + " :" + messageSplit[0] + "\n", rightAlign);
+                                if (messageSplit[1].equals(displayName) && messageSplit[0].equals("#" + id)) {
+                                    htmlDoc.insertString(0, messageSplit[2] + " :" + messageSplit[1] + " " + messageSplit[0]+"\n", rightAlign);
 
                                     // If the message is a notification about members leaving or joining, centers the test.
                                 } else if (messageSplit[0].equals("Notification")) {
@@ -212,15 +221,15 @@ public class ChatWindow {
                                     }
 
                                 } else if (messageSplit[0].equals("DM")){
-                                    if (messageSplit[1].equals("@" +displayName.replaceAll(" ", ""))){
-                                        htmlDoc.insertString(0, messageSplit[2] + ": " + messageSplit[3]+"\n", leftAlign);
+                                    if (messageSplit[1].equals("@" +(displayName + "#" + id).replaceAll(" ", ""))){
+                                        htmlDoc.insertString(0, messageSplit[3] + " " + messageSplit[2] + ": " + messageSplit[4]+"\n", leftAlign);
                                         // Plays sound notification for direct message if the setting is on.
                                         if (notifications) {
                                             soundNotification();
                                         }
                                     }
-                                    else if (messageSplit[2].equals(displayName)){
-                                        htmlDoc.insertString(0, messageSplit[1] + " " + messageSplit[3] + " :" + messageSplit[2] + "\n", rightAlign);
+                                    else if (messageSplit[3].equals(displayName) && messageSplit[2].equals("#" + id)){
+                                        htmlDoc.insertString(0, messageSplit[1] + " " + messageSplit[4] + " :" + messageSplit[3] + " " +messageSplit[2] + "\n", rightAlign);
                                     }
 
                                 } else if(messageSplit[0].equals("TypingNotification")){
@@ -230,7 +239,7 @@ public class ChatWindow {
                                     typingLabel.setText("");
                                 }else {
                                     // Aligns all messages from other users on the left side of the screen.
-                                    htmlDoc.insertString(0, messageArray.get(i) + "\n", leftAlign);
+                                    htmlDoc.insertString(0, messageSplit[1] + " " + messageSplit[0] + ": " + messageSplit[2] + "\n", leftAlign);
                                     // Plays sound notification for message from others to the chat room if the setting is on.
                                     if (notifications) {
                                         soundNotification();
@@ -262,7 +271,7 @@ public class ChatWindow {
 
                     // Checks the size of the member array to see if an update has occurred.
                     if (memberArray.size() != 0) {
-                        sendServerMessages(serverSocket, "DisplayName&#" + displayName);
+                        sendServerMessages(serverSocket, "DisplayName&#" + displayName + "#" + id);
                         // Takes the names from the memberNamesArray and creates a string array.
                         String[] memberNames = new String[memberNamesArray.size()];
 
@@ -304,7 +313,7 @@ public class ChatWindow {
                     // Sends a message to the server to notify members that the user has left.
                     sendServerMessages(serverSocket, "Message&#Notification:" + displayName + " has left the chat.");
                     // Sends a message to the server to remove the users name from the members list.
-                    sendServerMessages(serverSocket, "RemoveMember&#" + displayName);
+                    sendServerMessages(serverSocket, "RemoveMember&#" + displayName + "#" + id);
 
 
                     try {
@@ -334,7 +343,7 @@ public class ChatWindow {
             sendButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    sendMessage(displayName);
+                    sendMessage(displayName, id);
                 }
             });
 
@@ -344,7 +353,7 @@ public class ChatWindow {
                     // Listens for the caret to move in the text box to identify when the user is typing.
                     //typingLabel.setText(displayName + " is typing...");
                     if (!typing) {
-                        sendServerMessages(serverSocket, "Message&#TypingNotification:" + displayName);
+                        sendServerMessages(serverSocket, "Message&#TypingNotification:" + displayName + " #" + id);
                     }
                     typing = true;
                 }
@@ -355,7 +364,7 @@ public class ChatWindow {
                 public void keyPressed(KeyEvent e) {
                     super.keyPressed(e);
                     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        sendMessage(displayName);
+                        sendMessage(displayName, id);
                     }
                 }
             });
@@ -394,7 +403,7 @@ public class ChatWindow {
             public void focusLost(FocusEvent e) {
                 super.focusLost(e);
                 // If the user clicks off of the text field, it sends a message to indicate that they stopped typing.
-                sendServerMessages(serverSocket, "Message&#RemoveTyping:" + displayName);
+                sendServerMessages(serverSocket, "Message&#RemoveTyping:" + displayName + " #" + id);
                 typing = false;
             }
         });
@@ -426,7 +435,7 @@ public class ChatWindow {
         }
     }
     // Helper method used to send a message.
-    private void sendMessage(String displayName){
+    private void sendMessage(String displayName, int id){
         boolean isDirectMessage = false;
         String userMessage;
         // Determines if it is a direct message
@@ -443,12 +452,12 @@ public class ChatWindow {
                 }
             }
             // Formats the message with the appropriate deliminators and the format of the message.
-            userMessage = "Message&#DM:" + messageField.getText().substring(0, index) + ":" + displayName + ":(DM)" + messageField.getText().substring(index, messageField.getText().length());
+            userMessage = "Message&#DM:" + messageField.getText().substring(0, index) + ":#" + id + ":" +  displayName + ":(DM)" + messageField.getText().substring(index, messageField.getText().length());
         }
         else {
             // If the message is not a direct message, formats it in a standard way.
             // concatenates the message identifier, the users display name, and their message to a string.
-            userMessage = "Message&#" + displayName + ": " + messageField.getText();
+            userMessage = "Message&##" + id + ":" + displayName + ": " + messageField.getText();
         }
         // Sends the message.
         // Calls the method the send the message to the server.
@@ -456,7 +465,7 @@ public class ChatWindow {
         // Clears the text field and typing label.
         messageField.setText("");
         typingLabel.setText("");
-        sendServerMessages(serverSocket, "Message&#RemoveTyping:" + displayName);
+        sendServerMessages(serverSocket, "Message&#RemoveTyping:" + displayName + " #" + id);
         typing = false;
     }
     public void sendServerMessages(Socket serverSocket, String userMessage){

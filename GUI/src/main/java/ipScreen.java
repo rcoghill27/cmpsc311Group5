@@ -29,6 +29,7 @@ public class ipScreen {
     private final MaskFormatter ipMask3 = new MaskFormatter("##.##.##.###");
 
     private final MaskFormatter ipMask4 = new MaskFormatter("##.##.###.##");
+    private final MaskFormatter ipMask5 = new MaskFormatter("##.##.##.##");
     public ipScreen(JFrame appWindow) throws ParseException {
         // Sets the buttons to invisible if nothing is selected.
 
@@ -41,10 +42,12 @@ public class ipScreen {
         ipMask2.setPlaceholderCharacter('#');
         ipMask3.setPlaceholderCharacter('#');
         ipMask4.setPlaceholderCharacter('#');
+        ipMask5.setPlaceholderCharacter('#');
         ipDropDown.addItem("##.##.###.###");
         ipDropDown.addItem("###.###.#.###");
         ipDropDown.addItem("##.##.##.###");
         ipDropDown.addItem("##.##.###.##");
+        ipDropDown.addItem("##.##.##.##");
 
 
         // Sets the ip text field mask to the first one.
@@ -184,6 +187,11 @@ public class ipScreen {
                     ipMask4.install(ipTextField);
                     ipTextField.updateUI();
                 }
+                else if (Objects.equals(ipDropDown.getSelectedItem(), "##.##.##.##")){
+                    ipMask5.install(ipTextField);
+                    ipTextField.updateUI();
+                }
+
 
             }
         });
