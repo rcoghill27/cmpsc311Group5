@@ -1,4 +1,3 @@
-
 //Jack
 //Sheon
 //Ryan
@@ -151,7 +150,8 @@ static void handleSIGTERM(int sigNum) {
 
 			for (int i = 0; i < MAX_CLIENTS; i++) {
 //				message = "Server shutting down.";
-				sprintf(message, "Server shutdown");
+
+				sprintf(message, "ServerShutdown&#Server is shutting down.");
 				if (client_sockets[i] >= 0) {
 					bytes_sent = send(client_sockets[i], message, strlen(message), 0);
 					if (bytes_sent == -1) {
@@ -171,6 +171,7 @@ static void handleSIGTERM(int sigNum) {
 
                 sprintf(message,"\nThe program was terminated at: %s\n", ctime(&currTime));
                 verbose_log(verbose, serverLog_filename, message);
+
 
         }    
         exit (EXIT_SUCCESS); //default action
@@ -230,6 +231,7 @@ int main(int argc, char *argv[]){
     sprintf(message,"Process ID is (%d)", getpid());
     verbose_log(verbose, serverLog_filename, message);
 
+
     if( signal(SIGTERM, handleSIGTERM) == SIG_ERR)
     {
         verbose_log(verbose, serverLog_filename, "Cannot handle SIGTERM!\n");
@@ -286,6 +288,7 @@ int main(int argc, char *argv[]){
             close(new_socket);  // Reject new connection if max clients are reached
         }
     }
+
 	
 
 	return 0;
