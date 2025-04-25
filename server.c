@@ -127,7 +127,7 @@ static void * client_handler (void* arg) {
 
 	sprintf(buffer, "Client %d disconnecting", (int) client_pos);
 	verbose_log(verbose, serverLog_filename, buffer);
-	close(client_sockets[client_pos];
+	close(client_sockets[client_pos]);
 	client_sockets[client_pos] = -1;
 	client_count--;
 	sprintf(buffer, "Client count: %d", (int) client_count);
