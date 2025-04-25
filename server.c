@@ -127,6 +127,7 @@ static void * client_handler (void* arg) {
 
 	sprintf(buffer, "Client %d disconnecting", (int) client_pos);
 	verbose_log(verbose, serverLog_filename, buffer);
+	close(client_sockets[client_pos];
 	client_sockets[client_pos] = -1;
 	client_count--;
 	sprintf(buffer, "Client count: %d", (int) client_count);
@@ -138,43 +139,37 @@ static void * client_handler (void* arg) {
 
 }
 
-
+// SIGTERM handler
 static void handleSIGTERM(int sigNum) {
-        time_t currTime = time(NULL);
+	time_t currTime = time(NULL);
 	ssize_t bytes_sent;
 	char message[1024];
 
-        if (sigNum == SIGTERM)
-        {
-
-
-			for (int i = 0; i < MAX_CLIENTS; i++) {
-//				message = "Server shutting down.";
-
-				sprintf(message, "ServerShutdown&#Server is shutting down.");
-				if (client_sockets[i] >= 0) {
-					bytes_sent = send(client_sockets[i], message, strlen(message), 0);
-					if (bytes_sent == -1) {
-						verbose_log(verbose, serverLog_filename, "Failed to send message");
-					}
+	if (sigNum == SIGTERM)
+	{
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			sprintf(message, "ServerShutdown&#Server is shutting down.");
+			if (client_sockets[i] >= 0) {
+				bytes_sent = send(client_sockets[i], message, strlen(message), 0);
+				if (bytes_sent == -1) {
+					verbose_log(verbose, serverLog_filename, "Failed to send message");
 				}
 			}
+		}
 
 
-                close(socket_fd);
-                verbose_log(verbose, serverLog_filename, "\nCaught SIGTERM! Cleaning up... \n");
+		close(socket_fd);
+		verbose_log(verbose, serverLog_filename, "\nCaught SIGTERM! Cleaning up... \n");
 
-                verbose_log(verbose, serverLog_filename, "Server shutting down\n");
-                for(int i = 0; i < MAX_CLIENTS; i++) {
-                        close(client_sockets[i]);
-                }
+		verbose_log(verbose, serverLog_filename, "Server shutting down\n");
+		for(int i = 0; i < MAX_CLIENTS; i++) {
+			close(client_sockets[i]);
+		}
 
-                sprintf(message,"\nThe program was terminated at: %s\n", ctime(&currTime));
-                verbose_log(verbose, serverLog_filename, message);
-
-
-        }    
-        exit (EXIT_SUCCESS); //default action
+		sprintf(message,"\nThe program was terminated at: %s\n", ctime(&currTime));
+		verbose_log(verbose, serverLog_filename, message);
+    }
+    exit(EXIT_SUCCESS); //default action
 }
 
 
@@ -289,8 +284,5 @@ int main(int argc, char *argv[]){
         }
     }
 
-	
-
 	return 0;
-
 }
