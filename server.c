@@ -144,12 +144,13 @@ static void handleSIGTERM(int sigNum) {
 	ssize_t bytes_sent;
 	char message[1024];
 
-        if (sigNum == SIGINT || sigNum == SIGTERM)
+        if (sigNum == SIGTERM)
         {
 
 
 			for (int i = 0; i < MAX_CLIENTS; i++) {
 //				message = "Server shutting down.";
+
 				sprintf(message, "ServerShutdown&#Server is shutting down.");
 				if (client_sockets[i] >= 0) {
 					bytes_sent = send(client_sockets[i], message, strlen(message), 0);
@@ -171,7 +172,8 @@ static void handleSIGTERM(int sigNum) {
                 sprintf(message,"\nThe program was terminated at: %s\n", ctime(&currTime));
                 verbose_log(verbose, serverLog_filename, message);
 
-        }
+
+        }    
         exit (EXIT_SUCCESS); //default action
 }
 
@@ -229,7 +231,8 @@ int main(int argc, char *argv[]){
     sprintf(message,"Process ID is (%d)", getpid());
     verbose_log(verbose, serverLog_filename, message);
 
-    if( signal(SIGINT, handleSIGTERM) == SIG_ERR || signal(SIGTERM, handleSIGTERM) == SIG_ERR)
+
+    if( signal(SIGTERM, handleSIGTERM) == SIG_ERR)
     {
         verbose_log(verbose, serverLog_filename, "Cannot handle SIGTERM!\n");
         exit(-1);
@@ -286,6 +289,7 @@ int main(int argc, char *argv[]){
         }
     }
 
+	
 
 	return 0;
 
