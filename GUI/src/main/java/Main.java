@@ -20,6 +20,7 @@ public class Main {
             try{
                 UIManager.setLookAndFeel(new FlatDarkLaf());
             } catch (Exception ignored){}
+            writer.writeSettingsFile(0, 0, new FlatDarkLaf().toString());
         }
         // Sets the window to the previous theme and size if settings file is not empty.
         else{
