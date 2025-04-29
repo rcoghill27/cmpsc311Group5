@@ -166,10 +166,12 @@ public class ipScreen {
 
             }
         });
-        // Creates an action listener
-        ipDropDown.addActionListener(new ActionListener() {
+        
+        // Creates an item listener
+
+        ipDropDown.addItemListener(new ItemListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void itemStateChanged(ItemEvent e) {
                 // Compares the selected item to a string and updates the text field with the appropriate mask.
                 if (Objects.equals(ipDropDown.getSelectedItem(), "##.##.###.###")) {
                     ipMask1.install(ipTextField);
@@ -191,8 +193,6 @@ public class ipScreen {
                     ipMask5.install(ipTextField);
                     ipTextField.updateUI();
                 }
-
-
             }
         });
     }
